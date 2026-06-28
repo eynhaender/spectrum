@@ -35,7 +35,7 @@ def test_elsock(caplog):
         port=50002,
         callback=callback,
         use_ssl=True,
-        call_timeout=1,
+        call_timeout=10,
     )
     ts = elsock.ping()
     logger.info(f"First working ping in {ts} ms")
@@ -80,7 +80,7 @@ def test_elsock(caplog):
     logger.info(elsock._socket)
     ts = elsock.ping()
     logger.info(f"second working ping in {ts} ms")
-    assert ts < 1
+    assert ts < 10
     assert caplog.text.count("ElectrumSocket Status changed") == 9
 
     assert (

@@ -54,5 +54,6 @@ test = [
   "mock",
   "black",
   "pre-commit",
-  "bdkpython"
+  "Werkzeug<3",
+  "bdkpython==0.32.1"
 ]

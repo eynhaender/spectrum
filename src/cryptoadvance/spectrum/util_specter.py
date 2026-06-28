@@ -295,7 +295,9 @@ class BitcoinRPC:
     def __getattr__(self, method):
         def fn(*args, **kwargs):
             r = self.multi([(method, *args)], **kwargs)[0]
-            if r["error"] is not None:
+            # Bitcoin Core 30.0 omits the JSON-RPC "error" field from successful
+            # responses instead of returning "error": null.
+            if r.get("error") is not None:
                 raise Exception(
                     f"Request error for method {method}{args}: {r['error']['message']}",
                     r,

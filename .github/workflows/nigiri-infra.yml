@@ -32,6 +32,47 @@ jobs:
         uses: vulpemventures/nigiri-github-action@v1
         with:
           use_liquid: false
+      - name: Wait for Bitcoin RPC
+        run: |
+          python3 - <<'PY'
+          import json
+          import time
+          import urllib.error
+          import urllib.request
+
+          url = "http://localhost:18443"
+          password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+          password_mgr.add_password(None, url, "admin1", "123")
+          opener = urllib.request.build_opener(
+              urllib.request.HTTPBasicAuthHandler(password_mgr)
+          )
+          payload = json.dumps({
+              "jsonrpc": "2.0",
+              "id": "ci-ready",
+              "method": "getblockchaininfo",
+              "params": [],
+          }).encode()
+
+          deadline = time.time() + 120
+          last_error = None
+          while time.time() < deadline:
+              try:
+                  request = urllib.request.Request(
+                      url,
+                      data=payload,
+                      headers={"content-type": "application/json"},
+                  )
+                  with opener.open(request, timeout=5) as response:
+                      result = json.loads(response.read())["result"]
+                  print("Bitcoin RPC ready:", result["chain"], result["blocks"])
+                  raise SystemExit(0)
+              except Exception as exc:
+                  last_error = exc
+                  print("Waiting for Bitcoin RPC:", exc)
+                  time.sleep(2)
+
+          raise SystemExit(f"Bitcoin RPC did not become ready: {last_error}")
+          PY
       - name: Run integration tests
         run: |
           pytest tests/integration/basics.py
